@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  bff-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.bff
+    ports:
+      - "50054:50054"
+    networks:
+      - grpc-network
+    environment:
+      - USER_SERVICE_ADDR=user-service:50051
+      - PRODUCT_SERVICE_ADDR=product-service:50052
+      - ORDER_SERVICE_ADDR=order-service:50053
+
+networks:
+  grpc-network:
+    external: true
+    name: grpc-federation-demo_grpc-network

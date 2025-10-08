@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package user;
+
+option go_package = "github.com/keitaj/grpc-federation-demo/proto/backend";
+
+import "google/rpc/error_details.proto";
+
+// UserFailureCode defines error codes for user service
+enum UserFailureCode {
+  USER_FAILURE_CODE_UNSPECIFIED = 0;
+  USER_FAILURE_CODE_USER_NOT_FOUND = 10000;           // User does not exist
+  USER_FAILURE_CODE_USER_ACCOUNT_SUSPENDED = 10001;   // User account is suspended
+}
+
+// UserErrorReason defines reasons for unavailable errors
+enum UserErrorReason {
+  USER_ERROR_REASON_UNSPECIFIED = 0;
+  USER_ERROR_REASON_MAINTENANCE = 1;                  // System maintenance
+  USER_ERROR_REASON_UNEXPECTED_ERROR = 2;             // Unexpected system error
+}
+
+service UserService {
+  rpc GetUser(GetUserRequest) returns (GetUserResponse);
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse);
+}
+
+message GetUserRequest {
+  string user_id = 1;
+}
+
+message GetUserResponse {
+  User user = 1;
+}
+
+message ListUsersRequest {
+  int32 limit = 1;
+  int32 offset = 2;
+}
+
+message ListUsersResponse {
+  repeated User users = 1;
+  int32 total = 2;
+}
+
+message User {
+  string id = 1;
+  string name = 2;
+  string email = 3;
+  int32 age = 4;
+  string created_at = 5;
+}

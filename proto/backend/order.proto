@@ -1,0 +1,81 @@
+syntax = "proto3";
+
+package order;
+
+option go_package = "github.com/keitaj/grpc-federation-demo/proto/backend";
+
+import "google/rpc/error_details.proto";
+
+// OrderFailureCode defines error codes for order service
+enum OrderFailureCode {
+  ORDER_FAILURE_CODE_UNSPECIFIED = 0;
+  ORDER_FAILURE_CODE_ORDER_NOT_FOUND = 10000;          // Order does not exist
+  ORDER_FAILURE_CODE_ORDER_CANCELLED = 10001;          // Order has been cancelled
+  ORDER_FAILURE_CODE_ORDER_NO_ITEMS = 10002;           // Order has no items
+}
+
+// OrderErrorReason defines reasons for unavailable errors
+enum OrderErrorReason {
+  ORDER_ERROR_REASON_UNSPECIFIED = 0;
+  ORDER_ERROR_REASON_MAINTENANCE = 1;                  // System maintenance
+  ORDER_ERROR_REASON_UNEXPECTED_ERROR = 2;             // Unexpected system error
+}
+
+service OrderService {
+  rpc GetOrder(GetOrderRequest) returns (GetOrderResponse);
+  rpc ListOrdersByUser(ListOrdersByUserRequest) returns (ListOrdersByUserResponse);
+  rpc CreateOrder(CreateOrderRequest) returns (CreateOrderResponse);
+}
+
+message GetOrderRequest {
+  string order_id = 1;
+}
+
+message GetOrderResponse {
+  Order order = 1;
+}
+
+message ListOrdersByUserRequest {
+  string user_id = 1;
+  int32 limit = 2;
+  int32 offset = 3;
+}
+
+message ListOrdersByUserResponse {
+  repeated Order orders = 1;
+  int32 total = 2;
+}
+
+message CreateOrderRequest {
+  string user_id = 1;
+  repeated OrderItem items = 2;
+}
+
+message CreateOrderResponse {
+  Order order = 1;
+}
+
+message Order {
+  string id = 1;
+  string user_id = 2;
+  repeated OrderItem items = 3;
+  double total_amount = 4;
+  OrderStatus status = 5;
+  string created_at = 6;
+  string updated_at = 7;
+}
+
+message OrderItem {
+  string product_id = 1;
+  int32 quantity = 2;
+  double price = 3;
+}
+
+enum OrderStatus {
+  ORDER_STATUS_UNSPECIFIED = 0;
+  ORDER_STATUS_PENDING = 1;
+  ORDER_STATUS_PROCESSING = 2;
+  ORDER_STATUS_SHIPPED = 3;
+  ORDER_STATUS_DELIVERED = 4;
+  ORDER_STATUS_CANCELLED = 5;
+}

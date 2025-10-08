@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  user-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+      args:
+        SERVICE_NAME: user
+    ports:
+      - "50051:50051"
+    networks:
+      - grpc-network
+
+  product-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+      args:
+        SERVICE_NAME: product
+    ports:
+      - "50052:50052"
+    networks:
+      - grpc-network
+
+  order-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+      args:
+        SERVICE_NAME: order
+    ports:
+      - "50053:50053"
+    networks:
+      - grpc-network
+
+  bff-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.bff
+    ports:
+      - "50054:50054"
+    depends_on:
+      - user-service
+      - product-service
+      - order-service
+    networks:
+      - grpc-network
+    environment:
+      - USER_SERVICE_ADDR=user-service:50051
+      - PRODUCT_SERVICE_ADDR=product-service:50052
+      - ORDER_SERVICE_ADDR=order-service:50053
+
+networks:
+  grpc-network:
+    driver: bridge

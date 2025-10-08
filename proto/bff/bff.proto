@@ -1,0 +1,852 @@
+syntax = "proto3";
+
+package bff;
+
+option go_package = "github.com/keitaj/grpc-federation-demo/proto/bff";
+
+import "grpc/federation/federation.proto";
+import "proto/backend/user.proto";
+import "proto/backend/product.proto";
+import "proto/backend/order.proto";
+
+option (grpc.federation.file) = {
+  import : [
+    "proto/backend/user.proto",
+    "proto/backend/product.proto",
+    "proto/backend/order.proto"
+  ]
+};
+
+// UserViolationType defines validation errors for all user-related operations
+enum UserViolationType {
+  option (.grpc.federation.enum).alias = "user.UserFailureCode";
+
+  // This is never used.
+  USER_VIOLATION_TYPE_UNSPECIFIED = 0 [
+    (.grpc.federation.enum_value) = {
+      default : true
+      alias : "USER_FAILURE_CODE_UNSPECIFIED"
+      attr {name : "ja-JP" value : "エラーが発生しました。時間をおいて再度お試しください。"}
+    }
+  ];
+
+  // User not found
+  USER_VIOLATION_TYPE_USER_NOT_FOUND = 1 [
+    (.grpc.federation.enum_value) = {
+      alias : "USER_FAILURE_CODE_USER_NOT_FOUND"
+      attr {name : "ja-JP" value : "ユーザーが見つかりません。ユーザーIDをご確認ください。"}
+    }
+  ];
+
+  // User account is suspended
+  USER_VIOLATION_TYPE_ACCOUNT_SUSPENDED = 2 [
+    (.grpc.federation.enum_value) = {
+      alias : "USER_FAILURE_CODE_USER_ACCOUNT_SUSPENDED"
+      attr {name : "ja-JP" value : "このアカウントは停止されています。"}
+    }
+  ];
+}
+
+// OrderViolationType defines validation errors for all order-related operations
+enum OrderViolationType {
+  option (.grpc.federation.enum).alias = "order.OrderFailureCode";
+
+  // This is never used.
+  ORDER_VIOLATION_TYPE_UNSPECIFIED = 0 [
+    (.grpc.federation.enum_value) = {
+      default : true
+      alias : "ORDER_FAILURE_CODE_UNSPECIFIED"
+      attr {name : "ja-JP" value : "エラーが発生しました。時間をおいて再度お試しください。"}
+    }
+  ];
+
+  // Order not found
+  ORDER_VIOLATION_TYPE_ORDER_NOT_FOUND = 1 [
+    (.grpc.federation.enum_value) = {
+      alias : "ORDER_FAILURE_CODE_ORDER_NOT_FOUND"
+      attr {name : "ja-JP" value : "注文が見つかりません。注文IDをご確認ください。"}
+    }
+  ];
+
+  // Order is cancelled
+  ORDER_VIOLATION_TYPE_ORDER_CANCELLED = 2 [
+    (.grpc.federation.enum_value) = {
+      alias : "ORDER_FAILURE_CODE_ORDER_CANCELLED"
+      attr {name : "ja-JP" value : "この注文はキャンセルされているため、詳細を表示できません。"}
+    }
+  ];
+
+  // Order has no items
+  ORDER_VIOLATION_TYPE_NO_ITEMS = 3 [
+    (.grpc.federation.enum_value) = {
+      alias : "ORDER_FAILURE_CODE_ORDER_NO_ITEMS"
+      attr {name : "ja-JP" value : "この注文には商品が含まれていません。"}
+    }
+  ];
+}
+
+// ProductViolationType defines validation errors for all product-related operations
+enum ProductViolationType {
+  option (.grpc.federation.enum).alias = "product.ProductFailureCode";
+
+  // This is never used.
+  PRODUCT_VIOLATION_TYPE_UNSPECIFIED = 0 [
+    (.grpc.federation.enum_value) = {
+      default : true
+      alias : "PRODUCT_FAILURE_CODE_UNSPECIFIED"
+      attr {name : "ja-JP" value : "エラーが発生しました。時間をおいて再度お試しください。"}
+    }
+  ];
+
+  // Product not found
+  PRODUCT_VIOLATION_TYPE_PRODUCT_NOT_FOUND = 1 [
+    (.grpc.federation.enum_value) = {
+      alias : "PRODUCT_FAILURE_CODE_PRODUCT_NOT_FOUND"
+      attr {name : "ja-JP" value : "商品が見つかりません。商品IDをご確認ください。"}
+    }
+  ];
+
+  // Product is out of stock
+  PRODUCT_VIOLATION_TYPE_PRODUCT_OUT_OF_STOCK = 2 [
+    (.grpc.federation.enum_value) = {
+      alias : "PRODUCT_FAILURE_CODE_PRODUCT_OUT_OF_STOCK"
+      attr {name : "ja-JP" value : "この商品は在庫切れです。"}
+    }
+  ];
+}
+
+// UserErrorReason defines unavailable error reasons for user service
+enum UserErrorReason {
+  option (.grpc.federation.enum).alias = "user.UserErrorReason";
+
+  USER_ERROR_REASON_UNSPECIFIED = 0 [
+    (.grpc.federation.enum_value) = {
+      default : true
+      alias : "USER_ERROR_REASON_UNSPECIFIED"
+      attr {name : "ja-JP" value : "エラーが発生しました。時間をおいて再度お試しください。"}
+    }
+  ];
+
+  USER_ERROR_REASON_MAINTENANCE = 1 [
+    (.grpc.federation.enum_value) = {
+      alias : "USER_ERROR_REASON_MAINTENANCE"
+      attr {name : "ja-JP" value : "システムメンテナンス中のため、ユーザーサービスをご利用いただけません。メンテナンス終了後に再度お試しください。"}
+    }
+  ];
+
+  USER_ERROR_REASON_UNEXPECTED_ERROR = 2 [
+    (.grpc.federation.enum_value) = {
+      alias : "USER_ERROR_REASON_UNEXPECTED_ERROR"
+      attr {name : "ja-JP" value : "ユーザーサービスでシステムエラーが発生しました。しばらくしてから再度お試しください。"}
+    }
+  ];
+}
+
+// OrderErrorReason defines unavailable error reasons for order service
+enum OrderErrorReason {
+  option (.grpc.federation.enum).alias = "order.OrderErrorReason";
+
+  ORDER_ERROR_REASON_UNSPECIFIED = 0 [
+    (.grpc.federation.enum_value) = {
+      default : true
+      alias : "ORDER_ERROR_REASON_UNSPECIFIED"
+      attr {name : "ja-JP" value : "エラーが発生しました。時間をおいて再度お試しください。"}
+    }
+  ];
+
+  ORDER_ERROR_REASON_MAINTENANCE = 1 [
+    (.grpc.federation.enum_value) = {
+      alias : "ORDER_ERROR_REASON_MAINTENANCE"
+      attr {name : "ja-JP" value : "システムメンテナンス中のため、注文サービスをご利用いただけません。メンテナンス終了後に再度お試しください。"}
+    }
+  ];
+
+  ORDER_ERROR_REASON_UNEXPECTED_ERROR = 2 [
+    (.grpc.federation.enum_value) = {
+      alias : "ORDER_ERROR_REASON_UNEXPECTED_ERROR"
+      attr {name : "ja-JP" value : "注文サービスでシステムエラーが発生しました。しばらくしてから再度お試しください。"}
+    }
+  ];
+}
+
+// ProductErrorReason defines unavailable error reasons for product service
+enum ProductErrorReason {
+  option (.grpc.federation.enum).alias = "product.ProductErrorReason";
+
+  PRODUCT_ERROR_REASON_UNSPECIFIED = 0 [
+    (.grpc.federation.enum_value) = {
+      default : true
+      alias : "PRODUCT_ERROR_REASON_UNSPECIFIED"
+      attr {name : "ja-JP" value : "エラーが発生しました。時間をおいて再度お試しください。"}
+    }
+  ];
+
+  PRODUCT_ERROR_REASON_MAINTENANCE = 1 [
+    (.grpc.federation.enum_value) = {
+      alias : "PRODUCT_ERROR_REASON_MAINTENANCE"
+      attr {name : "ja-JP" value : "システムメンテナンス中のため、商品サービスをご利用いただけません。メンテナンス終了後に再度お試しください。"}
+    }
+  ];
+
+  PRODUCT_ERROR_REASON_UNEXPECTED_ERROR = 2 [
+    (.grpc.federation.enum_value) = {
+      alias : "PRODUCT_ERROR_REASON_UNEXPECTED_ERROR"
+      attr {name : "ja-JP" value : "商品サービスでシステムエラーが発生しました。しばらくしてから再度お試しください。"}
+    }
+  ];
+}
+
+service BFFService {
+  option (grpc.federation.service) = {};
+
+  rpc GetUserWithOrders(GetUserWithOrdersRequest) returns (GetUserWithOrdersResponse);
+  rpc GetOrderDetails(GetOrderDetailsRequest) returns (GetOrderDetailsResponse);
+  rpc GetUserDashboard(GetUserDashboardRequest) returns (GetUserDashboardResponse);
+}
+
+message GetUserWithOrdersRequest {
+  string user_id = 1;
+}
+
+message GetUserWithOrdersResponse {
+  option (grpc.federation.message) = {
+    def [
+      {
+        name : "user_res"
+        call {
+          method : "user.UserService/GetUser"
+          request [
+            { field : "user_id", by : "$.user_id" }
+          ]
+          timeout : "5s"
+          retry {
+            if : "error.code != google.rpc.Code.FAILED_PRECONDITION && error.code != google.rpc.Code.UNAVAILABLE"
+            exponential {
+              initial_interval : "250ms"
+              max_retries : 1
+            }
+          }
+          error [
+            {
+              def {
+                name : "violation_type"
+                enum {
+                  name : "UserViolationType"
+                  by : "user.UserFailureCode.value(error.precondition_failures[?0].violations[?0].type.orValue(''))"
+                }
+              }
+
+              if : "violation_type != UserViolationType.USER_VIOLATION_TYPE_UNSPECIFIED"
+
+              code : FAILED_PRECONDITION
+              message : "''"
+
+              details {
+                precondition_failure {
+                  violations {
+                    type : "UserViolationType.name(violation_type)"
+                    subject : "'GetUserWithOrders'"
+                    description : "error.message"
+                  }
+                }
+                localized_message {
+                  locale : "ja-JP"
+                  message : "UserViolationType.attr(violation_type, 'ja-JP')"
+                }
+              }
+            },
+            {
+              def {
+                name : "error_reason"
+                enum {
+                  name : "UserErrorReason"
+                  by : "user.UserErrorReason.value(error.error_info[?0].reason.orValue(''))"
+                }
+              }
+
+              if : "error.code == google.rpc.Code.UNAVAILABLE"
+
+              code : UNAVAILABLE
+              message : "''"
+
+              details {
+                localized_message {
+                  locale : "ja-JP"
+                  message : "UserErrorReason.attr(error_reason, 'ja-JP')"
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        name : "orders_res"
+        call {
+          method : "order.OrderService/ListOrdersByUser"
+          request [
+            { field : "user_id", by : "$.user_id" },
+            { field : "limit", by : "10" },
+            { field : "offset", by : "0" }
+          ]
+          timeout : "5s"
+          retry {
+            if : "error.code != google.rpc.Code.FAILED_PRECONDITION && error.code != google.rpc.Code.UNAVAILABLE"
+            exponential {
+              initial_interval : "250ms"
+              max_retries : 1
+            }
+          }
+          error [
+            {
+              def {
+                name : "order_violation_type"
+                enum {
+                  name : "OrderViolationType"
+                  by : "order.OrderFailureCode.value(error.precondition_failures[?0].violations[?0].type.orValue(''))"
+                }
+              }
+
+              if : "order_violation_type != OrderViolationType.ORDER_VIOLATION_TYPE_UNSPECIFIED"
+
+              code : FAILED_PRECONDITION
+              message : "''"
+
+              details {
+                precondition_failure {
+                  violations {
+                    type : "OrderViolationType.name(order_violation_type)"
+                    subject : "'GetUserWithOrders'"
+                    description : "error.message"
+                  }
+                }
+                localized_message {
+                  locale : "ja-JP"
+                  message : "OrderViolationType.attr(order_violation_type, 'ja-JP')"
+                }
+              }
+            },
+            {
+              def {
+                name : "order_error_reason"
+                enum {
+                  name : "OrderErrorReason"
+                  by : "order.OrderErrorReason.value(error.error_info[?0].reason.orValue(''))"
+                }
+              }
+
+              if : "error.code == google.rpc.Code.UNAVAILABLE"
+
+              code : UNAVAILABLE
+              message : "''"
+
+              details {
+                localized_message {
+                  locale : "ja-JP"
+                  message : "OrderErrorReason.attr(order_error_reason, 'ja-JP')"
+                }
+              }
+            }
+          ]
+        }
+      }
+    ]
+  };
+
+  user.User user = 1 [(grpc.federation.field).by = "user_res.user"];
+  repeated order.Order orders = 2 [(grpc.federation.field).by = "orders_res.orders"];
+  int32 total_orders = 3 [(grpc.federation.field).by = "orders_res.total"];
+}
+
+message GetOrderDetailsRequest {
+  string order_id = 1;
+}
+
+message GetOrderDetailsResponse {
+  option (grpc.federation.message) = {
+    def [
+      {
+        name : "order_res"
+        call {
+          method : "order.OrderService/GetOrder"
+          request [
+            { field : "order_id", by : "$.order_id" }
+          ]
+          timeout : "5s"
+          retry {
+            if : "error.code != google.rpc.Code.FAILED_PRECONDITION && error.code != google.rpc.Code.UNAVAILABLE"
+            exponential {
+              initial_interval : "250ms"
+              max_retries : 1
+            }
+          }
+          error [
+            {
+              def {
+                name : "violation_type"
+                enum {
+                  name : "OrderViolationType"
+                  by : "order.OrderFailureCode.value(error.precondition_failures[?0].violations[?0].type.orValue(''))"
+                }
+              }
+
+              if : "violation_type != OrderViolationType.ORDER_VIOLATION_TYPE_UNSPECIFIED"
+
+              code : FAILED_PRECONDITION
+              message : "''"
+
+              details {
+                precondition_failure {
+                  violations {
+                    type : "OrderViolationType.name(violation_type)"
+                    subject : "'GetOrderDetails'"
+                    description : "error.message"
+                  }
+                }
+                localized_message {
+                  locale : "ja-JP"
+                  message : "OrderViolationType.attr(violation_type, 'ja-JP')"
+                }
+              }
+            },
+            {
+              def {
+                name : "error_reason"
+                enum {
+                  name : "OrderErrorReason"
+                  by : "order.OrderErrorReason.value(error.error_info[?0].reason.orValue(''))"
+                }
+              }
+
+              if : "error.code == google.rpc.Code.UNAVAILABLE"
+
+              code : UNAVAILABLE
+              message : "''"
+
+              details {
+                localized_message {
+                  locale : "ja-JP"
+                  message : "OrderErrorReason.attr(error_reason, 'ja-JP')"
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        name : "the_order"
+        by : "order_res.order"
+      },
+      {
+        name : "order_items"
+        by : "the_order.items"
+      },
+      {
+        name : "user_res"
+        call {
+          method : "user.UserService/GetUser"
+          request [
+            { field : "user_id", by : "the_order.user_id" }
+          ]
+          timeout : "5s"
+          retry {
+            if : "error.code != google.rpc.Code.FAILED_PRECONDITION && error.code != google.rpc.Code.UNAVAILABLE"
+            exponential {
+              initial_interval : "250ms"
+              max_retries : 1
+            }
+          }
+          error [
+            {
+              def {
+                name : "user_violation_type"
+                enum {
+                  name : "UserViolationType"
+                  by : "user.UserFailureCode.value(error.precondition_failures[?0].violations[?0].type.orValue(''))"
+                }
+              }
+
+              if : "user_violation_type != UserViolationType.USER_VIOLATION_TYPE_UNSPECIFIED"
+
+              code : FAILED_PRECONDITION
+              message : "''"
+
+              details {
+                precondition_failure {
+                  violations {
+                    type : "UserViolationType.name(user_violation_type)"
+                    subject : "'GetOrderDetails'"
+                    description : "error.message"
+                  }
+                }
+                localized_message {
+                  locale : "ja-JP"
+                  message : "UserViolationType.attr(user_violation_type, 'ja-JP')"
+                }
+              }
+            },
+            {
+              def {
+                name : "user_error_reason"
+                enum {
+                  name : "UserErrorReason"
+                  by : "user.UserErrorReason.value(error.error_info[?0].reason.orValue(''))"
+                }
+              }
+
+              if : "error.code == google.rpc.Code.UNAVAILABLE"
+
+              code : UNAVAILABLE
+              message : "''"
+
+              details {
+                localized_message {
+                  locale : "ja-JP"
+                  message : "UserErrorReason.attr(user_error_reason, 'ja-JP')"
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        name : "product_details"
+        map {
+          iterator { name : "item", src : "order_items" }
+          message {
+            name : "ProductDetail"
+            args [
+              { name : "item", by : "item" }
+            ]
+          }
+        }
+      }
+    ]
+  };
+
+  order.Order order = 1 [(grpc.federation.field).by = "the_order"];
+  user.User user = 2 [(grpc.federation.field).by = "user_res.user"];
+  repeated ProductDetail product_details = 3 [(grpc.federation.field).by = "product_details"];
+}
+
+message ProductDetail {
+  option (grpc.federation.message) = {
+    def [
+      {
+        name : "product_res"
+        call {
+          method : "product.ProductService/GetProduct"
+          request [
+            { field : "product_id", by : "$.item.product_id" }
+          ]
+          timeout : "5s"
+          retry {
+            if : "error.code != google.rpc.Code.FAILED_PRECONDITION && error.code != google.rpc.Code.UNAVAILABLE"
+            exponential {
+              initial_interval : "250ms"
+              max_retries : 1
+            }
+          }
+          error [
+            {
+              def {
+                name : "product_violation_type"
+                enum {
+                  name : "ProductViolationType"
+                  by : "product.ProductFailureCode.value(error.precondition_failures[?0].violations[?0].type.orValue(''))"
+                }
+              }
+
+              if : "product_violation_type != ProductViolationType.PRODUCT_VIOLATION_TYPE_UNSPECIFIED"
+
+              code : FAILED_PRECONDITION
+              message : "''"
+
+              details {
+                precondition_failure {
+                  violations {
+                    type : "ProductViolationType.name(product_violation_type)"
+                    subject : "'GetOrderDetails/ProductDetail'"
+                    description : "error.message"
+                  }
+                }
+                localized_message {
+                  locale : "ja-JP"
+                  message : "ProductViolationType.attr(product_violation_type, 'ja-JP')"
+                }
+              }
+            },
+            {
+              def {
+                name : "error_reason"
+                enum {
+                  name : "ProductErrorReason"
+                  by : "product.ProductErrorReason.value(error.error_info[?0].reason.orValue(''))"
+                }
+              }
+
+              if : "error.code == google.rpc.Code.UNAVAILABLE"
+
+              code : UNAVAILABLE
+              message : "''"
+
+              details {
+                localized_message {
+                  locale : "ja-JP"
+                  message : "ProductErrorReason.attr(error_reason, 'ja-JP')"
+                }
+              }
+            }
+          ]
+        }
+      }
+    ]
+  };
+
+  product.Product product = 1 [(grpc.federation.field).by = "product_res.product"];
+  int32 quantity = 2 [(grpc.federation.field).by = "$.item.quantity"];
+  double subtotal = 3 [(grpc.federation.field).by = "double($.item.quantity) * $.item.price"];
+}
+
+message GetUserDashboardRequest {
+  string user_id = 1;
+}
+
+message GetUserDashboardResponse {
+  option (grpc.federation.message) = {
+    def [
+      {
+        name : "user_res"
+        call {
+          method : "user.UserService/GetUser"
+          request [
+            { field : "user_id", by : "$.user_id" }
+          ]
+          timeout : "5s"
+          retry {
+            if : "error.code != google.rpc.Code.FAILED_PRECONDITION && error.code != google.rpc.Code.UNAVAILABLE"
+            exponential {
+              initial_interval : "250ms"
+              max_retries : 1
+            }
+          }
+          error [
+            {
+              def {
+                name : "violation_type"
+                enum {
+                  name : "UserViolationType"
+                  by : "user.UserFailureCode.value(error.precondition_failures[?0].violations[?0].type.orValue(''))"
+                }
+              }
+
+              if : "violation_type != UserViolationType.USER_VIOLATION_TYPE_UNSPECIFIED"
+
+              code : FAILED_PRECONDITION
+              message : "''"
+
+              details {
+                precondition_failure {
+                  violations {
+                    type : "UserViolationType.name(violation_type)"
+                    subject : "'GetUserDashboard'"
+                    description : "error.message"
+                  }
+                }
+                localized_message {
+                  locale : "ja-JP"
+                  message : "UserViolationType.attr(violation_type, 'ja-JP')"
+                }
+              }
+            },
+            {
+              def {
+                name : "error_reason"
+                enum {
+                  name : "UserErrorReason"
+                  by : "user.UserErrorReason.value(error.error_info[?0].reason.orValue(''))"
+                }
+              }
+
+              if : "error.code == google.rpc.Code.UNAVAILABLE"
+
+              code : UNAVAILABLE
+              message : "''"
+
+              details {
+                localized_message {
+                  locale : "ja-JP"
+                  message : "UserErrorReason.attr(error_reason, 'ja-JP')"
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        name : "the_user"
+        by : "user_res.user"
+      },
+      {
+        name : "orders_res"
+        call {
+          method : "order.OrderService/ListOrdersByUser"
+          request [
+            { field : "user_id", by : "$.user_id" },
+            { field : "limit", by : "10" },
+            { field : "offset", by : "0" }
+          ]
+          timeout : "5s"
+          retry {
+            if : "error.code != google.rpc.Code.FAILED_PRECONDITION && error.code != google.rpc.Code.UNAVAILABLE"
+            exponential {
+              initial_interval : "250ms"
+              max_retries : 1
+            }
+          }
+          error [
+            {
+              def {
+                name : "order_violation_type"
+                enum {
+                  name : "OrderViolationType"
+                  by : "order.OrderFailureCode.value(error.precondition_failures[?0].violations[?0].type.orValue(''))"
+                }
+              }
+
+              if : "order_violation_type != OrderViolationType.ORDER_VIOLATION_TYPE_UNSPECIFIED"
+
+              code : FAILED_PRECONDITION
+              message : "''"
+
+              details {
+                precondition_failure {
+                  violations {
+                    type : "OrderViolationType.name(order_violation_type)"
+                    subject : "'GetUserDashboard'"
+                    description : "error.message"
+                  }
+                }
+                localized_message {
+                  locale : "ja-JP"
+                  message : "OrderViolationType.attr(order_violation_type, 'ja-JP')"
+                }
+              }
+            },
+            {
+              def {
+                name : "order_error_reason"
+                enum {
+                  name : "OrderErrorReason"
+                  by : "order.OrderErrorReason.value(error.error_info[?0].reason.orValue(''))"
+                }
+              }
+
+              if : "error.code == google.rpc.Code.UNAVAILABLE"
+
+              code : UNAVAILABLE
+              message : "''"
+
+              details {
+                localized_message {
+                  locale : "ja-JP"
+                  message : "OrderErrorReason.attr(order_error_reason, 'ja-JP')"
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        name : "products_res"
+        call {
+          method : "product.ProductService/ListProducts"
+          request [
+            { field : "limit", by : "5" },
+            { field : "offset", by : "0" }
+          ]
+          timeout : "5s"
+          retry {
+            if : "error.code != google.rpc.Code.FAILED_PRECONDITION && error.code != google.rpc.Code.UNAVAILABLE"
+            exponential {
+              initial_interval : "250ms"
+              max_retries : 1
+            }
+          }
+          error [
+            {
+              def {
+                name : "product_violation_type"
+                enum {
+                  name : "ProductViolationType"
+                  by : "product.ProductFailureCode.value(error.precondition_failures[?0].violations[?0].type.orValue(''))"
+                }
+              }
+
+              if : "product_violation_type != ProductViolationType.PRODUCT_VIOLATION_TYPE_UNSPECIFIED"
+
+              code : FAILED_PRECONDITION
+              message : "''"
+
+              details {
+                precondition_failure {
+                  violations {
+                    type : "ProductViolationType.name(product_violation_type)"
+                    subject : "'GetUserDashboard'"
+                    description : "error.message"
+                  }
+                }
+                localized_message {
+                  locale : "ja-JP"
+                  message : "ProductViolationType.attr(product_violation_type, 'ja-JP')"
+                }
+              }
+            },
+            {
+              def {
+                name : "product_error_reason"
+                enum {
+                  name : "ProductErrorReason"
+                  by : "product.ProductErrorReason.value(error.error_info[?0].reason.orValue(''))"
+                }
+              }
+
+              if : "error.code == google.rpc.Code.UNAVAILABLE"
+
+              code : UNAVAILABLE
+              message : "''"
+
+              details {
+                localized_message {
+                  locale : "ja-JP"
+                  message : "ProductErrorReason.attr(product_error_reason, 'ja-JP')"
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        name : "stats"
+        message {
+          name : "UserStatistics"
+          args [
+            { name : "total_orders", by : "orders_res.total" },
+            { name : "orders", by : "orders_res.orders" }
+          ]
+        }
+      }
+    ]
+  };
+
+  user.User user = 1 [(grpc.federation.field).by = "the_user"];
+  repeated order.Order recent_orders = 2 [(grpc.federation.field).by = "orders_res.orders"];
+  repeated product.Product recommended_products = 3 [(grpc.federation.field).by = "products_res.products"];
+  UserStatistics statistics = 4 [(grpc.federation.field).by = "stats"];
+}
+
+message UserStatistics {
+  option (grpc.federation.message) = {};
+
+  int32 total_orders = 1 [(grpc.federation.field).by = "$.total_orders"];
+  double total_spent = 2 [(grpc.federation.field).by = "0.0"];
+}

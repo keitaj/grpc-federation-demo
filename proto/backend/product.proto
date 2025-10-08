@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package product;
+
+option go_package = "github.com/keitaj/grpc-federation-demo/proto/backend";
+
+// ProductFailureCode defines error codes for product service
+enum ProductFailureCode {
+  PRODUCT_FAILURE_CODE_UNSPECIFIED = 0;
+  PRODUCT_FAILURE_CODE_PRODUCT_NOT_FOUND = 10000;        // Product does not exist
+  PRODUCT_FAILURE_CODE_PRODUCT_OUT_OF_STOCK = 10001;     // Product is out of stock
+}
+
+// ProductErrorReason defines reasons for unavailable errors
+enum ProductErrorReason {
+  PRODUCT_ERROR_REASON_UNSPECIFIED = 0;
+  PRODUCT_ERROR_REASON_MAINTENANCE = 1;                  // System maintenance
+  PRODUCT_ERROR_REASON_UNEXPECTED_ERROR = 2;             // Unexpected system error
+}
+
+service ProductService {
+  rpc GetProduct(GetProductRequest) returns (GetProductResponse);
+  rpc ListProducts(ListProductsRequest) returns (ListProductsResponse);
+  rpc GetProductsByIDs(GetProductsByIDsRequest) returns (GetProductsByIDsResponse);
+}
+
+message GetProductRequest {
+  string product_id = 1;
+}
+
+message GetProductResponse {
+  Product product = 1;
+}
+
+message ListProductsRequest {
+  string category = 1;
+  int32 limit = 2;
+  int32 offset = 3;
+}
+
+message ListProductsResponse {
+  repeated Product products = 1;
+  int32 total = 2;
+}
+
+message GetProductsByIDsRequest {
+  repeated string product_ids = 1;
+}
+
+message GetProductsByIDsResponse {
+  repeated Product products = 1;
+}
+
+message Product {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  double price = 4;
+  string category = 5;
+  int32 stock = 6;
+  string created_at = 7;
+}
