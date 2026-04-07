@@ -59,19 +59,19 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to connect to User Service: %v", err)
 	}
-	defer userConn.Close()
+	defer func() { _ = userConn.Close() }()
 
 	productConn, err := grpc.NewClient(productServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("Failed to connect to Product Service: %v", err)
 	}
-	defer productConn.Close()
+	defer func() { _ = productConn.Close() }()
 
 	orderConn, err := grpc.NewClient(orderServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("Failed to connect to Order Service: %v", err)
 	}
-	defer orderConn.Close()
+	defer func() { _ = orderConn.Close() }()
 
 	// Create client factory
 	factory := &clientFactory{
