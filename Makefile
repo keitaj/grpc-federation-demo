@@ -2,6 +2,7 @@
 	build-backend build-bff build-all \
 	up-backend up-bff up-all \
 	down-backend down-bff down-all clean \
+	test lint \
 	grpcurl-list grpcurl-user grpcurl-order grpcurl-dashboard grpcurl-all
 
 # ========================================
@@ -45,6 +46,16 @@ init:
 	go mod download
 	@echo ""
 	@echo "Setup complete!"
+
+# ========================================
+# Test & Lint
+# ========================================
+
+test:
+	go test -v -race ./...
+
+lint:
+	golangci-lint run ./...
 
 # ========================================
 # Docker Compose Commands
