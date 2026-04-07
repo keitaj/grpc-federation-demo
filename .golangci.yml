@@ -1,5 +1,5 @@
 version: "2"
 
-run:
-  exclude-dirs:
+exclusions:
+  paths:
     - proto
