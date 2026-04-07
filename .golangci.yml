@@ -1,5 +1,11 @@
 version: "2"
 
-exclusions:
-  paths:
-    - proto
+linters:
+  exclusions:
+    paths:
+      - "proto/"
+
+formatters:
+  exclusions:
+    paths:
+      - "proto/"
