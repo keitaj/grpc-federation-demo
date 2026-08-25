@@ -1,6 +1,8 @@
 module github.com/keitaj/grpc-federation-demo
 
-go 1.27.0
+go 1.26.0
+
+toolchain go1.27.0
 
 require (
 	github.com/mercari/grpc-federation v1.27.0

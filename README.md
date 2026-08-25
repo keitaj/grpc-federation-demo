@@ -12,7 +12,7 @@ The demo consists of:
 ## Prerequisites
 
 - Docker and Docker Compose
-- Go 1.27+ (for development only)
+- Go 1.26+ (for development only; `go.mod` pins the build toolchain to Go 1.27)
 - Protocol Buffers compiler (protoc) (for development only)
 
 ## Quick Start
