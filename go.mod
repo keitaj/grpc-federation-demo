@@ -1,9 +1,9 @@
 module github.com/keitaj/grpc-federation-demo
 
-go 1.26.0
+go 1.27.0
 
 require (
-	github.com/mercari/grpc-federation v1.24.2
+	github.com/mercari/grpc-federation v1.27.0
 	go.opentelemetry.io/otel v1.43.0
 	go.opentelemetry.io/otel/trace v1.43.0
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260414002931-afd174a4e478
