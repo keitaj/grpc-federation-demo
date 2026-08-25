@@ -134,6 +134,27 @@ message GetUserWithOrdersResponse {
 }
 ```
 
+### Aggregating with CEL
+
+Aggregation across a repeated field is written as a CEL expression, so no Go code
+is needed on the BFF side. `GetUserDashboard` sums the order amounts with the
+`reduce` macro from the `grpc.federation.list` library:
+
+```protobuf
+message UserStatistics {
+  option (grpc.federation.message) = {};
+
+  int32 total_orders = 1 [(grpc.federation.field).by = "$.total_orders"];
+  double total_spent = 2 [(grpc.federation.field).by =
+    "$.orders.reduce(accum, cur, accum + cur.total_amount, 0.0)"];
+}
+```
+
+```console
+$ make grpcurl-dashboard
+"statistics": { "totalOrders": 2, "totalSpent": 889.95 }
+```
+
 ## Project Structure
 
 ```

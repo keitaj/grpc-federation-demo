@@ -848,5 +848,12 @@ message UserStatistics {
   option (grpc.federation.message) = {};
 
   int32 total_orders = 1 [(grpc.federation.field).by = "$.total_orders"];
-  double total_spent = 2 [(grpc.federation.field).by = "0.0"];
+
+  // Sum of total_amount over the orders passed in as an argument, computed with
+  // the grpc.federation.list `reduce` macro. No aggregation code is needed on
+  // the BFF side.
+  // Note: only the orders fetched by ListOrdersByUser (limit: 10) are included,
+  // so this is the amount spent on the recent orders, not the lifetime total.
+  double total_spent = 2 [(grpc.federation.field).by =
+    "$.orders.reduce(accum, cur, accum + cur.total_amount, 0.0)"];
 }

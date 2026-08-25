@@ -717,9 +717,14 @@ func (x *GetUserDashboardResponse) GetStatistics() *UserStatistics {
 }
 
 type UserStatistics struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TotalOrders   int32                  `protobuf:"varint,1,opt,name=total_orders,json=totalOrders,proto3" json:"total_orders,omitempty"`
-	TotalSpent    float64                `protobuf:"fixed64,2,opt,name=total_spent,json=totalSpent,proto3" json:"total_spent,omitempty"`
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	TotalOrders int32                  `protobuf:"varint,1,opt,name=total_orders,json=totalOrders,proto3" json:"total_orders,omitempty"`
+	// Sum of total_amount over the orders passed in as an argument, computed with
+	// the grpc.federation.list `reduce` macro. No aggregation code is needed on
+	// the BFF side.
+	// Note: only the orders fetched by ListOrdersByUser (limit: 10) are included,
+	// so this is the amount spent on the recent orders, not the lifetime total.
+	TotalSpent    float64 `protobuf:"fixed64,2,opt,name=total_spent,json=totalSpent,proto3" json:"total_spent,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -949,10 +954,10 @@ const file_proto_bff_bff_proto_rawDesc = "" +
 	"\x05statsjO\n" +
 	"\x0eUserStatistics\x12 \n" +
 	"\ftotal_orders\x12\x10orders_res.total\x12\x1b\n" +
-	"\x06orders\x12\x11orders_res.orders\"x\n" +
+	"\x06orders\x12\x11orders_res.orders\"\xaf\x01\n" +
 	"\x0eUserStatistics\x126\n" +
-	"\ftotal_orders\x18\x01 \x01(\x05B\x13\x9aJ\x10\x12\x0e$.total_ordersR\vtotalOrders\x12)\n" +
-	"\vtotal_spent\x18\x02 \x01(\x01B\b\x9aJ\x05\x12\x030.0R\n" +
+	"\ftotal_orders\x18\x01 \x01(\x05B\x13\x9aJ\x10\x12\x0e$.total_ordersR\vtotalOrders\x12`\n" +
+	"\vtotal_spent\x18\x02 \x01(\x01B?\x9aJ<\x12:$.orders.reduce(accum, cur, accum + cur.total_amount, 0.0)R\n" +
 	"totalSpent:\x03\x9aJ\x00*\x9c\x04\n" +
 	"\x11UserViolationType\x12\xa6\x01\n" +
 	"\x1fUSER_VIOLATION_TYPE_UNSPECIFIED\x10\x00\x1a\x80\x01\x9aJ}\b\x01\x12\x1dUSER_FAILURE_CODE_UNSPECIFIED\x1aZ\n" +
